@@ -44,11 +44,18 @@ interface OrderEntry {
   paid: boolean;
 }
 
+interface OrderData {
+  entries: OrderEntry[];
+  deliveryFee: number;
+  restaurantName: string;
+}
+
 const STORAGE_KEY = "sutherland-order-tracker";
 
 export function OrderTracker() {
   const [entries, setEntries] = useState<OrderEntry[]>([]);
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [restaurantName, setRestaurantName] = useState("");
   const [name, setName] = useState("");
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
@@ -59,9 +66,10 @@ export function OrderTracker() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const data = JSON.parse(saved);
+        const data: OrderData = JSON.parse(saved);
         setEntries(data.entries || []);
         setDeliveryFee(data.deliveryFee || 0);
+        setRestaurantName(data.restaurantName || "");
       } catch {
         console.error("Failed to load saved data");
       }
@@ -74,10 +82,10 @@ export function OrderTracker() {
     if (isLoaded) {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ entries, deliveryFee })
+        JSON.stringify({ entries, deliveryFee, restaurantName })
       );
     }
-  }, [entries, deliveryFee, isLoaded]);
+  }, [entries, deliveryFee, restaurantName, isLoaded]);
 
   const addEntry = useCallback(() => {
     if (!name.trim() || !item.trim() || !price.trim()) return;
@@ -111,6 +119,7 @@ export function OrderTracker() {
   const clearAll = useCallback(() => {
     setEntries([]);
     setDeliveryFee(0);
+    setRestaurantName("");
   }, []);
 
   // Calculate fee share per person
@@ -171,38 +180,27 @@ export function OrderTracker() {
         </header>
 
         <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-          {/* Delivery Fee Card */}
+          {/* Restaurant Name Card */}
           <Card className="border-[#C9A227] border-2 bg-white shadow-xl">
             <CardHeader className="bg-gradient-to-r from-[#00447C] to-[#003366] text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Truck className="h-5 w-5 text-[#C9A227]" />
-                Total Delivery Fee
+                <Package className="h-5 w-5 text-[#C9A227]" />
+                Restaurant
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <Field>
                 <FieldLabel className="text-[#00447C] font-semibold">
-                  Enter total delivery fee (will be split equally)
+                  Restaurant Name
                 </FieldLabel>
                 <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={deliveryFee || ""}
-                  onChange={(e) =>
-                    setDeliveryFee(parseFloat(e.target.value) || 0)
-                  }
+                  type="text"
+                  placeholder="Enter restaurant name"
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
                   className="text-lg font-medium border-[#00447C] focus:ring-[#C9A227]"
                 />
               </Field>
-              {entries.length > 0 && deliveryFee > 0 && (
-                <p className="mt-3 text-sm text-[#00447C] bg-[#E5E7EB] p-3 rounded-md">
-                  Fee per person:{" "}
-                  <span className="font-bold text-[#C9A227]">
-                    {formatEGP(feeShare)}
-                  </span>{" "}
-                  ({entries.length} participant{entries.length !== 1 ? "s" : ""})
-                </p>
-              )}
             </CardContent>
           </Card>
 
@@ -264,6 +262,41 @@ export function OrderTracker() {
                   Add Order
                 </Button>
               </FieldGroup>
+            </CardContent>
+          </Card>
+
+          {/* Delivery Fee Card */}
+          <Card className="bg-white shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-[#00447C] to-[#003366] text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Truck className="h-5 w-5 text-[#C9A227]" />
+                Total Delivery Fee
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Field>
+                <FieldLabel className="text-[#00447C] font-semibold">
+                  Enter total delivery fee (will be split equally)
+                </FieldLabel>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={deliveryFee || ""}
+                  onChange={(e) =>
+                    setDeliveryFee(parseFloat(e.target.value) || 0)
+                  }
+                  className="text-lg font-medium border-[#00447C] focus:ring-[#C9A227]"
+                />
+              </Field>
+              {entries.length > 0 && deliveryFee > 0 && (
+                <p className="mt-3 text-sm text-[#00447C] bg-[#E5E7EB] p-3 rounded-md">
+                  Fee per person:{" "}
+                  <span className="font-bold text-[#C9A227]">
+                    {formatEGP(feeShare)}
+                  </span>{" "}
+                  ({entries.length} participant{entries.length !== 1 ? "s" : ""})
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -453,6 +486,9 @@ export function OrderTracker() {
           </div>
           <div className="text-xl font-bold my-2">SUTHERLAND ORDER TRACKER</div>
           <div className="text-sm">Egypt Office</div>
+          {restaurantName && (
+            <div className="text-sm font-bold mt-1">{restaurantName}</div>
+          )}
           <div className="text-lg font-bold tracking-wider">
             ================================
           </div>
