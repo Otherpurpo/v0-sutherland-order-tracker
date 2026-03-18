@@ -1,30 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Plus,
   Trash2,
@@ -34,6 +10,7 @@ import {
   Users,
   Receipt,
   Truck,
+  Store,
 } from "lucide-react";
 
 interface OrderEntry {
@@ -60,6 +37,7 @@ export function OrderTracker() {
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -120,11 +98,11 @@ export function OrderTracker() {
     setEntries([]);
     setDeliveryFee(0);
     setRestaurantName("");
+    setShowClearModal(false);
   }, []);
 
   // Calculate fee share per person
-  const feeShare =
-    entries.length > 0 ? deliveryFee / entries.length : 0;
+  const feeShare = entries.length > 0 ? deliveryFee / entries.length : 0;
 
   // Calculate totals
   const subtotal = entries.reduce((sum, entry) => sum + entry.price, 0);
@@ -154,398 +132,455 @@ export function OrderTracker() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#27235C]">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
+      <section className="hero is-fullheight is-primary">
+        <div className="hero-body">
+          <div className="container has-text-centered">
+            <p className="title has-text-white">Loading...</p>
+          </div>
+        </div>
+      </section>
     );
   }
 
   return (
     <>
       {/* Main App - Hidden when printing */}
-      <div className="no-print min-h-screen bg-gradient-to-b from-[#27235C] to-[#1a1740]">
-        {/* Header */}
-        <header className="bg-[#27235C] border-b border-[#1a1740] shadow-lg">
-          <div className="max-w-6xl mx-auto px-4 py-6">
-            <div className="flex items-center justify-center gap-3">
-              <Package className="h-8 w-8 text-[#DE1B54]" />
-              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight text-balance">
-                Sutherland Order Tracker
-              </h1>
+      <div className="no-print" style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
+        {/* Hero Header */}
+        <section className="hero is-primary is-small">
+          <div className="hero-body">
+            <div className="container has-text-centered">
+              <div className="is-flex is-justify-content-center is-align-items-center mb-2" style={{ gap: "0.75rem" }}>
+                <Package size={36} style={{ color: "#DE1B54" }} />
+                <h1 className="title is-2 has-text-white mb-0">
+                  Sutherland Order Tracker
+                </h1>
+              </div>
+              <p className="subtitle is-6 has-text-white-ter">
+                Egypt Office - Food Order Management
+              </p>
             </div>
-            <p className="text-center text-[#E5E7EB] mt-2 text-sm">
-              Egypt Office - Food Order Management
-            </p>
           </div>
-        </header>
+        </section>
 
-        <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-          {/* Restaurant Name Card */}
-          <Card className="border-[#DE1B54] border-2 bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="h-5 w-5 text-[#DE1B54]" />
-                Restaurant
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Field>
-                <FieldLabel className="text-[#27235C] font-semibold">
-                  Restaurant Name
-                </FieldLabel>
-                <Input
-                  type="text"
-                  placeholder="Enter restaurant name"
-                  value={restaurantName}
-                  onChange={(e) => setRestaurantName(e.target.value)}
-                  className="text-lg font-medium border-[#27235C] focus:ring-[#DE1B54]"
-                />
-              </Field>
-            </CardContent>
-          </Card>
-
-          {/* Add Order Form */}
-          <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Plus className="h-5 w-5 text-[#DE1B54]" />
-                Add New Order
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <FieldGroup>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Field>
-                    <FieldLabel className="text-[#27235C] font-semibold">
-                      Name
-                    </FieldLabel>
-                    <Input
-                      placeholder="Enter name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="border-[#27235C] focus:ring-[#DE1B54]"
-                      onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel className="text-[#27235C] font-semibold">
-                      Item Description
-                    </FieldLabel>
-                    <Input
-                      placeholder="e.g., Rob3 far5a"
-                      value={item}
-                      onChange={(e) => setItem(e.target.value)}
-                      className="border-[#27235C] focus:ring-[#DE1B54]"
-                      onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel className="text-[#27235C] font-semibold">
-                      Price (EGP)
-                    </FieldLabel>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="border-[#27235C] focus:ring-[#DE1B54]"
-                      onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    />
-                  </Field>
-                </div>
-                <Button
-                  onClick={addEntry}
-                  disabled={!name.trim() || !item.trim() || !price.trim()}
-                  className="w-full md:w-auto bg-[#27235C] hover:bg-[#1a1740] text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Order
-                </Button>
-              </FieldGroup>
-            </CardContent>
-          </Card>
-
-          {/* Delivery Fee Card */}
-          <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Truck className="h-5 w-5 text-[#DE1B54]" />
-                Total Delivery Fee
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Field>
-                <FieldLabel className="text-[#27235C] font-semibold">
-                  Enter total delivery fee (will be split equally)
-                </FieldLabel>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={deliveryFee || ""}
-                  onChange={(e) =>
-                    setDeliveryFee(parseFloat(e.target.value) || 0)
-                  }
-                  className="text-lg font-medium border-[#27235C] focus:ring-[#DE1B54]"
-                />
-              </Field>
-              {entries.length > 0 && deliveryFee > 0 && (
-                <p className="mt-3 text-sm text-[#27235C] bg-[#E5E7EB] p-3 rounded-md">
-                  Fee per person:{" "}
-                  <span className="font-bold text-[#DE1B54]">
-                    {formatEGP(feeShare)}
-                  </span>{" "}
-                  ({entries.length} participant{entries.length !== 1 ? "s" : ""})
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Members Table */}
-          <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5 text-[#DE1B54]" />
-                Members ({entries.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4 px-0 md:px-6">
-              {entries.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-[#E5E7EB]" />
-                  <p>No orders yet. Add your first order above.</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#E5E7EB]">
-                      <TableHead className="text-[#27235C] font-bold">Name</TableHead>
-                      <TableHead className="text-[#27235C] font-bold">Item</TableHead>
-                      <TableHead className="text-[#27235C] font-bold text-right">Price</TableHead>
-                      <TableHead className="text-[#27235C] font-bold text-right">Fee Share</TableHead>
-                      <TableHead className="text-[#27235C] font-bold text-right">Total</TableHead>
-                      <TableHead className="text-[#27235C] font-bold text-center">Paid</TableHead>
-                      <TableHead className="text-[#27235C] font-bold text-center">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {entries.map((entry) => (
-                      <TableRow
-                        key={entry.id}
-                        className={entry.paid ? "bg-green-50" : ""}
-                      >
-                        <TableCell className="font-medium text-[#27235C]">
-                          {entry.name}
-                        </TableCell>
-                        <TableCell>{entry.item}</TableCell>
-                        <TableCell className="text-right">
-                          {formatEGP(entry.price)}
-                        </TableCell>
-                        <TableCell className="text-right text-[#DE1B54] font-medium">
-                          {formatEGP(feeShare)}
-                        </TableCell>
-                        <TableCell className="text-right font-bold text-[#27235C]">
-                          {formatEGP(entry.price + feeShare)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <Switch
-                              checked={entry.paid}
-                              onCheckedChange={() => togglePaid(entry.id)}
-                              className="data-[state=checked]:bg-green-600"
-                            />
-                            <span
-                              className={`text-xs font-medium ${
-                                entry.paid ? "text-green-600" : "text-muted-foreground"
-                              }`}
-                            >
-                              {entry.paid ? "Paid" : "Unpaid"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeEntry(entry.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Order Summary */}
-          {entries.length > 0 && (
-            <Card className="bg-white shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-[#DE1B54] to-[#b81747] text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Receipt className="h-5 w-5" />
-                  Order Summary (for Restaurant)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="bg-[#E5E7EB] rounded-lg p-4">
-                  <h3 className="font-bold text-[#27235C] mb-3">Items to Order:</h3>
-                  <ul className="space-y-2">
-                    {Object.values(groupedItems).map((item, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center gap-2 text-[#27235C]"
-                      >
-                        <span className="bg-[#27235C] text-white text-xs px-2 py-1 rounded-full font-bold">
-                          {item.count}x
+        {/* Main Content */}
+        <section className="section">
+          <div className="container" style={{ maxWidth: "1000px" }}>
+            <div className="columns is-multiline">
+              {/* Restaurant Name Card */}
+              <div className="column is-12">
+                <div className="card">
+                  <header className="card-header">
+                    <p className="card-header-title is-flex is-align-items-center" style={{ gap: "0.5rem" }}>
+                      <Store size={20} style={{ color: "#DE1B54" }} />
+                      Restaurant
+                    </p>
+                  </header>
+                  <div className="card-content">
+                    <div className="field">
+                      <label className="label has-text-primary">Restaurant Name</label>
+                      <div className="control has-icons-left">
+                        <input
+                          className="input"
+                          type="text"
+                          placeholder="Enter restaurant name"
+                          value={restaurantName}
+                          onChange={(e) => setRestaurantName(e.target.value)}
+                        />
+                        <span className="icon is-left">
+                          <Store size={18} style={{ color: "#7a7a7a" }} />
                         </span>
-                        <span className="font-medium">{item.name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-[#E5E7EB]">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-[#27235C]">Subtotal:</div>
-                    <div className="text-right font-medium">{formatEGP(subtotal)}</div>
-                    <div className="text-[#27235C]">Delivery Fee:</div>
-                    <div className="text-right font-medium text-[#DE1B54]">
-                      {formatEGP(deliveryFee)}
-                    </div>
-                    <div className="text-[#27235C] font-bold text-lg">Grand Total:</div>
-                    <div className="text-right font-bold text-lg text-[#27235C]">
-                      {formatEGP(grandTotal)}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              onClick={handlePrint}
-              disabled={entries.length === 0}
-              className="bg-[#DE1B54] hover:bg-[#b81747] text-white"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Print Receipt
-            </Button>
+              {/* Add New Order Card */}
+              <div className="column is-12">
+                <div className="card">
+                  <header className="card-header">
+                    <p className="card-header-title is-flex is-align-items-center" style={{ gap: "0.5rem" }}>
+                      <Plus size={20} style={{ color: "#DE1B54" }} />
+                      Add New Order
+                    </p>
+                  </header>
+                  <div className="card-content">
+                    <div className="columns is-multiline">
+                      <div className="column is-12-mobile is-4-tablet">
+                        <div className="field">
+                          <label className="label has-text-primary">Name</label>
+                          <div className="control">
+                            <input
+                              className="input"
+                              type="text"
+                              placeholder="Enter name"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && addEntry()}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="column is-12-mobile is-4-tablet">
+                        <div className="field">
+                          <label className="label has-text-primary">Item Description</label>
+                          <div className="control">
+                            <input
+                              className="input"
+                              type="text"
+                              placeholder="e.g., Rob3 far5a"
+                              value={item}
+                              onChange={(e) => setItem(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && addEntry()}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="column is-12-mobile is-4-tablet">
+                        <div className="field">
+                          <label className="label has-text-primary">Price (EGP)</label>
+                          <div className="control">
+                            <input
+                              className="input"
+                              type="number"
+                              placeholder="0.00"
+                              value={price}
+                              onChange={(e) => setPrice(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && addEntry()}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="field">
+                      <div className="control">
+                        <button
+                          className="button is-primary"
+                          onClick={addEntry}
+                          disabled={!name.trim() || !item.trim() || !price.trim()}
+                        >
+                          <span className="icon">
+                            <Plus size={18} />
+                          </span>
+                          <span>Add Order</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  disabled={entries.length === 0}
-                  className="border-destructive text-destructive hover:bg-destructive hover:text-white"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Clear All
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Clear All Orders?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove all orders and reset the delivery fee. This
-                    action cannot be undone. Are you sure you want to start fresh
-                    for a new day?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={clearAll}
-                    className="bg-destructive text-white hover:bg-destructive/90"
+              {/* Delivery Fee Card */}
+              <div className="column is-12">
+                <div className="card">
+                  <header className="card-header">
+                    <p className="card-header-title is-flex is-align-items-center" style={{ gap: "0.5rem" }}>
+                      <Truck size={20} style={{ color: "#DE1B54" }} />
+                      Total Delivery Fee
+                    </p>
+                  </header>
+                  <div className="card-content">
+                    <div className="field">
+                      <label className="label has-text-primary">
+                        Enter total delivery fee (will be split equally)
+                      </label>
+                      <div className="control has-icons-left">
+                        <input
+                          className="input"
+                          type="number"
+                          placeholder="0.00"
+                          value={deliveryFee || ""}
+                          onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
+                        />
+                        <span className="icon is-left">
+                          <Truck size={18} style={{ color: "#7a7a7a" }} />
+                        </span>
+                      </div>
+                    </div>
+                    {entries.length > 0 && deliveryFee > 0 && (
+                      <div className="notification is-info-light">
+                        <p>
+                          Fee per person:{" "}
+                          <strong className="has-text-accent">{formatEGP(feeShare)}</strong>
+                          {" "}({entries.length} participant{entries.length !== 1 ? "s" : ""})
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Members Table Card */}
+              <div className="column is-12">
+                <div className="card">
+                  <header className="card-header">
+                    <p className="card-header-title is-flex is-align-items-center" style={{ gap: "0.5rem" }}>
+                      <Users size={20} style={{ color: "#DE1B54" }} />
+                      Members ({entries.length})
+                    </p>
+                  </header>
+                  <div className="card-content">
+                    {entries.length === 0 ? (
+                      <div className="empty-state">
+                        <Users size={64} style={{ color: "#dbdbdb" }} />
+                        <p className="has-text-grey">No orders yet. Add your first order above.</p>
+                      </div>
+                    ) : (
+                      <div className="table-container">
+                        <table className="table is-fullwidth is-hoverable">
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Item</th>
+                              <th className="has-text-right">Price</th>
+                              <th className="has-text-right">Fee Share</th>
+                              <th className="has-text-right">Total</th>
+                              <th className="has-text-centered">Paid</th>
+                              <th className="has-text-centered">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {entries.map((entry) => (
+                              <tr key={entry.id} className={entry.paid ? "is-paid" : ""}>
+                                <td className="has-text-weight-semibold has-text-primary">
+                                  {entry.name}
+                                </td>
+                                <td>{entry.item}</td>
+                                <td className="has-text-right">{formatEGP(entry.price)}</td>
+                                <td className="has-text-right has-text-accent has-text-weight-medium">
+                                  {formatEGP(feeShare)}
+                                </td>
+                                <td className="has-text-right has-text-weight-bold has-text-primary">
+                                  {formatEGP(entry.price + feeShare)}
+                                </td>
+                                <td className="has-text-centered">
+                                  <label className="switch-label">
+                                    <input
+                                      type="checkbox"
+                                      className="switch-input"
+                                      checked={entry.paid}
+                                      onChange={() => togglePaid(entry.id)}
+                                    />
+                                    <span className="switch-toggle"></span>
+                                    <span className={`is-size-7 has-text-weight-medium ${entry.paid ? "has-text-success" : "has-text-grey"}`}>
+                                      {entry.paid ? "Paid" : "Unpaid"}
+                                    </span>
+                                  </label>
+                                </td>
+                                <td className="has-text-centered">
+                                  <button
+                                    className="button is-small is-danger is-light"
+                                    onClick={() => removeEntry(entry.id)}
+                                    title="Remove order"
+                                  >
+                                    <span className="icon">
+                                      <Trash2 size={16} />
+                                    </span>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Summary Card */}
+              {entries.length > 0 && (
+                <div className="column is-12">
+                  <div className="card">
+                    <header className="card-header">
+                      <p className="card-header-title is-accent is-flex is-align-items-center" style={{ gap: "0.5rem" }}>
+                        <Receipt size={20} />
+                        Order Summary (for Restaurant)
+                      </p>
+                    </header>
+                    <div className="card-content">
+                      <div className="box" style={{ backgroundColor: "#f5f5f5" }}>
+                        <h4 className="title is-6 has-text-primary mb-3">Items to Order:</h4>
+                        <div className="tags">
+                          {Object.values(groupedItems).map((groupedItem, index) => (
+                            <span key={index} className="tag is-primary is-medium is-rounded">
+                              <strong className="mr-1">{groupedItem.count}x</strong> {groupedItem.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <hr />
+
+                      <div className="columns is-mobile">
+                        <div className="column">
+                          <p className="has-text-primary">Subtotal:</p>
+                        </div>
+                        <div className="column has-text-right">
+                          <p className="has-text-weight-medium">{formatEGP(subtotal)}</p>
+                        </div>
+                      </div>
+                      <div className="columns is-mobile">
+                        <div className="column">
+                          <p className="has-text-primary">Delivery Fee:</p>
+                        </div>
+                        <div className="column has-text-right">
+                          <p className="has-text-weight-medium has-text-accent">{formatEGP(deliveryFee)}</p>
+                        </div>
+                      </div>
+                      <hr />
+                      <div className="columns is-mobile">
+                        <div className="column">
+                          <p className="title is-5 has-text-primary mb-0">Grand Total:</p>
+                        </div>
+                        <div className="column has-text-right">
+                          <p className="title is-5 has-text-primary mb-0">{formatEGP(grandTotal)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="column is-12">
+                <div className="buttons is-centered">
+                  <button
+                    className="button is-accent is-medium"
+                    onClick={handlePrint}
+                    disabled={entries.length === 0}
                   >
-                    Yes, Clear All
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <span className="icon">
+                      <Printer size={20} />
+                    </span>
+                    <span>Print Receipt</span>
+                  </button>
+                  <button
+                    className="button is-danger is-outlined is-medium"
+                    onClick={() => setShowClearModal(true)}
+                    disabled={entries.length === 0}
+                  >
+                    <span className="icon">
+                      <RotateCcw size={20} />
+                    </span>
+                    <span>Clear All</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </main>
+        </section>
 
         {/* Footer */}
-        <footer className="bg-[#1a1740] text-white py-4 mt-8">
-          <div className="max-w-6xl mx-auto px-4 text-center text-sm text-[#E5E7EB]">
+        <footer className="footer-custom">
+          <div className="content has-text-centered">
             <p>Sutherland Egypt Office - Order Tracker</p>
           </div>
         </footer>
+
+        {/* Clear All Confirmation Modal */}
+        <div className={`modal ${showClearModal ? "is-active" : ""}`}>
+          <div className="modal-background" onClick={() => setShowClearModal(false)}></div>
+          <div className="modal-card">
+            <header className="modal-card-head">
+              <p className="modal-card-title">Clear All Orders?</p>
+              <button
+                className="delete"
+                aria-label="close"
+                onClick={() => setShowClearModal(false)}
+              ></button>
+            </header>
+            <section className="modal-card-body">
+              <p>
+                This will remove all orders and reset the delivery fee. This action
+                cannot be undone. Are you sure you want to start fresh for a new day?
+              </p>
+            </section>
+            <footer className="modal-card-foot">
+              <div className="buttons">
+                <button className="button is-danger" onClick={clearAll}>
+                  Yes, Clear All
+                </button>
+                <button className="button" onClick={() => setShowClearModal(false)}>
+                  Cancel
+                </button>
+              </div>
+            </footer>
+          </div>
+        </div>
       </div>
 
       {/* Print Receipt - Only visible when printing */}
-      <div className="print-receipt hidden print:block">
-        <div className="text-center mb-4">
-          <div className="text-lg font-bold tracking-wider">
+      <div className="print-receipt">
+        <div style={{ textAlign: "center", marginBottom: "16px" }}>
+          <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "2px" }}>
             ================================
           </div>
-          <div className="text-xl font-bold my-2">SUTHERLAND ORDER TRACKER</div>
-          <div className="text-sm">Egypt Office</div>
+          <div style={{ fontSize: "18px", fontWeight: "bold", margin: "8px 0" }}>
+            SUTHERLAND ORDER TRACKER
+          </div>
+          <div style={{ fontSize: "12px" }}>Egypt Office</div>
           {restaurantName && (
-            <div className="text-sm font-bold mt-1">{restaurantName}</div>
+            <div style={{ fontSize: "12px", fontWeight: "bold", marginTop: "4px" }}>
+              {restaurantName}
+            </div>
           )}
-          <div className="text-lg font-bold tracking-wider">
+          <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "2px" }}>
             ================================
           </div>
         </div>
 
-        <div className="my-4">
-          <div className="text-xs mb-2">
+        <div style={{ margin: "16px 0" }}>
+          <div style={{ fontSize: "10px", marginBottom: "8px" }}>
             Date: {new Date().toLocaleDateString("en-GB")}
           </div>
-          <div className="border-b border-dashed border-black my-2" />
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
         </div>
 
-        <div className="mb-4">
-          <div className="font-bold mb-2">ORDERS:</div>
-          <div className="border-b border-dashed border-black my-2" />
-          {Object.values(groupedItems).map((item, index) => (
-            <div key={index} className="flex justify-between text-sm py-1">
-              <span>
-                {item.count}x {item.name}
-              </span>
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>ORDERS:</div>
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
+          {Object.values(groupedItems).map((groupedItem, index) => (
+            <div key={index} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", padding: "4px 0" }}>
+              <span>{groupedItem.count}x {groupedItem.name}</span>
             </div>
           ))}
-          <div className="border-b border-dashed border-black my-2" />
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
         </div>
 
-        <div className="mb-4">
-          <div className="font-bold mb-2">INDIVIDUAL TOTALS:</div>
-          <div className="border-b border-dashed border-black my-2" />
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>INDIVIDUAL TOTALS:</div>
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
           {entries.map((entry) => (
-            <div key={entry.id} className="flex justify-between text-sm py-1">
-              <span className="truncate max-w-[45%]">{entry.name}</span>
-              <span className="font-medium">{formatEGP(entry.price + feeShare)}</span>
+            <div key={entry.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", padding: "4px 0" }}>
+              <span style={{ maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis" }}>{entry.name}</span>
+              <span style={{ fontWeight: "500" }}>{formatEGP(entry.price + feeShare)}</span>
             </div>
           ))}
-          <div className="border-b border-dashed border-black my-2" />
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
         </div>
 
-        <div className="mb-4">
-          <div className="flex justify-between text-sm py-1">
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", padding: "4px 0" }}>
             <span>Subtotal:</span>
             <span>{formatEGP(subtotal)}</span>
           </div>
-          <div className="flex justify-between text-sm py-1">
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", padding: "4px 0" }}>
             <span>Delivery Fee:</span>
             <span>{formatEGP(deliveryFee)}</span>
           </div>
-          <div className="border-b border-dashed border-black my-2" />
-          <div className="flex justify-between font-bold text-lg py-2">
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "16px", padding: "8px 0" }}>
             <span>GRAND TOTAL:</span>
             <span>{formatEGP(grandTotal)}</span>
           </div>
         </div>
 
-        <div className="text-center mt-6">
-          <div className="border-b border-dashed border-black my-2" />
-          <div className="text-xs my-2">Thank you!</div>
-          <div className="text-lg font-bold tracking-wider">
+        <div style={{ textAlign: "center", marginTop: "24px" }}>
+          <div style={{ borderBottom: "1px dashed black", margin: "8px 0" }} />
+          <div style={{ fontSize: "10px", margin: "8px 0" }}>Thank you!</div>
+          <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "2px" }}>
             ================================
           </div>
         </div>
