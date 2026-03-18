@@ -2,27 +2,19 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Package,
+  Store,
   Plus,
   Truck,
   Users,
-  Receipt,
+  ClipboardList,
   Printer,
   RotateCcw,
   Trash2,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 const STORAGE_KEY = "sutherland-order-tracker";
 
@@ -65,7 +56,6 @@ export default function OrderTracker() {
   const [price, setPrice] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -81,7 +71,6 @@ export default function OrderTracker() {
     setIsLoaded(true);
   }, []);
 
-  // Save to localStorage whenever data changes
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem(
@@ -91,12 +80,10 @@ export default function OrderTracker() {
     }
   }, [entries, deliveryFee, restaurantName, isLoaded]);
 
-  // Calculate fee share per person
   const feeShare = useMemo(() => {
     return entries.length > 0 ? deliveryFee / entries.length : 0;
   }, [entries.length, deliveryFee]);
 
-  // Calculate totals
   const subtotal = useMemo(() => {
     return entries.reduce((sum, entry) => sum + entry.price, 0);
   }, [entries]);
@@ -105,7 +92,6 @@ export default function OrderTracker() {
     return subtotal + deliveryFee;
   }, [subtotal, deliveryFee]);
 
-  // Group items for order summary
   const groupedItems = useMemo(() => {
     const groups: Record<string, { name: string; count: number }> = {};
     entries.forEach((entry) => {
@@ -160,276 +146,260 @@ export default function OrderTracker() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#27235C]">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
+        <div className="text-[#27235C] text-lg font-medium">Loading...</div>
       </div>
     );
   }
 
   return (
     <>
-      {/* Main App - Hidden when printing */}
-      <div className="no-print min-h-screen bg-gradient-to-b from-[#27235C] to-[#1a1740]">
-        {/* Header */}
-        <header className="bg-[#27235C] border-b border-[#1a1740] shadow-lg">
-          <div className="max-w-6xl mx-auto px-4 py-6">
-            <div className="flex items-center justify-center gap-3">
-              <Package className="h-8 w-8 text-[#DE1B54]" />
-              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight text-balance">
-                Sutherland Order Tracker
-              </h1>
-            </div>
-            <p className="text-center text-[#E5E7EB] mt-2 text-sm">
-              Egypt Office - Food Order Management
+      {/* Main App */}
+      <div className="no-print min-h-screen bg-[#F8F9FA]">
+        {/* Header - Flat Design */}
+        <header className="bg-[#27235C] py-6">
+          <div className="max-w-4xl mx-auto px-4">
+            <h1 className="text-2xl font-semibold text-white text-center tracking-tight">
+              Sutherland Order Tracker
+            </h1>
+            <p className="text-center text-white/70 mt-1 text-sm">
+              Egypt Office
             </p>
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-          {/* Restaurant Name Card */}
-          <Card className="border-[#DE1B54] border-2 bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="h-5 w-5 text-[#DE1B54]" />
-                Restaurant
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Field>
-                <FieldLabel className="text-[#27235C] font-semibold">
-                  Restaurant Name
-                </FieldLabel>
-                <Input
-                  type="text"
-                  placeholder="Enter restaurant name"
-                  value={restaurantName}
-                  onChange={(e) => setRestaurantName(e.target.value)}
-                  className="text-lg font-medium border-[#27235C] focus:ring-[#DE1B54]"
-                />
-              </Field>
-            </CardContent>
-          </Card>
+        <main className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
+          {/* Restaurant Section */}
+          <section className="bg-white rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#27235C] flex items-center justify-center">
+                <Store className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-[#212529]">Restaurant</h2>
+            </div>
+            <Input
+              type="text"
+              placeholder="Enter restaurant name"
+              value={restaurantName}
+              onChange={(e) => setRestaurantName(e.target.value)}
+              className="h-12 text-base bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
+            />
+          </section>
 
-          {/* Add Order Form */}
-          <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Plus className="h-5 w-5 text-[#DE1B54]" />
-                Add New Order
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <FieldGroup>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Field>
-                    <FieldLabel className="text-[#27235C] font-semibold">
-                      Name
-                    </FieldLabel>
-                    <Input
-                      placeholder="Enter name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="border-[#27235C] focus:ring-[#DE1B54]"
-                      onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel className="text-[#27235C] font-semibold">
-                      Item Description
-                    </FieldLabel>
-                    <Input
-                      placeholder="e.g., Rob3 far5a"
-                      value={item}
-                      onChange={(e) => setItem(e.target.value)}
-                      className="border-[#27235C] focus:ring-[#DE1B54]"
-                      onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel className="text-[#27235C] font-semibold">
-                      Price (EGP)
-                    </FieldLabel>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="border-[#27235C] focus:ring-[#DE1B54]"
-                      onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    />
-                  </Field>
+          {/* Add Order Section */}
+          <section className="bg-white rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#27235C] flex items-center justify-center">
+                <Plus className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-[#212529]">Add New Order</h2>
+            </div>
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-[#6C757D]">Name</label>
+                  <Input
+                    placeholder="Enter name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addEntry()}
+                    className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
+                  />
                 </div>
-                <Button
-                  onClick={addEntry}
-                  disabled={!name.trim() || !item.trim() || !price.trim()}
-                  className="w-full md:w-auto bg-[#27235C] hover:bg-[#1a1740] text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Order
-                </Button>
-              </FieldGroup>
-            </CardContent>
-          </Card>
-
-          {/* Delivery Fee Card */}
-          <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Truck className="h-5 w-5 text-[#DE1B54]" />
-                Total Delivery Fee
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Field>
-                <FieldLabel className="text-[#27235C] font-semibold">
-                  Enter total delivery fee (will be split equally)
-                </FieldLabel>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={deliveryFee || ""}
-                  onChange={(e) =>
-                    setDeliveryFee(parseFloat(e.target.value) || 0)
-                  }
-                  className="text-lg font-medium border-[#27235C] focus:ring-[#DE1B54]"
-                />
-              </Field>
-              {entries.length > 0 && deliveryFee > 0 && (
-                <p className="mt-3 text-sm text-[#27235C] bg-[#E5E7EB] p-3 rounded-md">
-                  Fee per person:{" "}
-                  <span className="font-bold text-[#DE1B54]">
-                    {formatEGP(feeShare)}
-                  </span>{" "}
-                  ({entries.length} participant{entries.length !== 1 ? "s" : ""})
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Members Table */}
-          <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5 text-[#DE1B54]" />
-                Members ({entries.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4 px-0 md:px-6">
-              {entries.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-[#E5E7EB]" />
-                  <p>No orders yet. Add your first order above.</p>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-[#6C757D]">Item</label>
+                  <Input
+                    placeholder="e.g., Rob3 far5a"
+                    value={item}
+                    onChange={(e) => setItem(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addEntry()}
+                    className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
+                  />
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#E5E7EB]">
-                        <TableHead className="text-[#27235C] font-bold">Name</TableHead>
-                        <TableHead className="text-[#27235C] font-bold">Item</TableHead>
-                        <TableHead className="text-[#27235C] font-bold text-right">Price</TableHead>
-                        <TableHead className="text-[#27235C] font-bold text-right">Fee Share</TableHead>
-                        <TableHead className="text-[#27235C] font-bold text-right">Total</TableHead>
-                        <TableHead className="text-[#27235C] font-bold text-center">Paid</TableHead>
-                        <TableHead className="text-[#27235C] font-bold text-center">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {entries.map((entry) => (
-                        <TableRow
-                          key={entry.id}
-                          className={entry.paid ? "bg-green-50" : ""}
-                        >
-                          <TableCell className="font-medium text-[#27235C]">
-                            {entry.name}
-                          </TableCell>
-                          <TableCell>{entry.item}</TableCell>
-                          <TableCell className="text-right">
-                            {formatEGP(entry.price)}
-                          </TableCell>
-                          <TableCell className="text-right text-[#DE1B54] font-medium">
-                            {formatEGP(feeShare)}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-[#27235C]">
-                            {formatEGP(entry.price + feeShare)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch
-                              checked={entry.paid}
-                              onCheckedChange={() => togglePaid(entry.id)}
-                              className="data-[state=checked]:bg-green-500"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeEntry(entry.id)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-[#6C757D]">Price (EGP)</label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addEntry()}
+                    className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
+                  />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+              <Button
+                onClick={addEntry}
+                disabled={!name.trim() || !item.trim() || !price.trim()}
+                className="h-12 bg-[#DE1B54] hover:bg-[#c01848] text-white font-medium rounded-lg transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Order
+              </Button>
+            </div>
+          </section>
 
-          {/* Order Summary */}
-          {entries.length > 0 && (
-            <Card className="bg-white shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-[#DE1B54] to-[#b81747] text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Receipt className="h-5 w-5" />
-                  Order Summary (for Restaurant)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="bg-[#E5E7EB] rounded-lg p-4">
-                  <h3 className="font-bold text-[#27235C] mb-3">Items to Order:</h3>
-                  <ul className="space-y-2">
-                    {Object.values(groupedItems).map((groupedItem, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center gap-2 text-[#27235C]"
+          {/* Delivery Fee Section */}
+          <section className="bg-white rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#27235C] flex items-center justify-center">
+                <Truck className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-[#212529]">Delivery Fee</h2>
+            </div>
+            <Input
+              type="number"
+              placeholder="Total delivery fee (will be split equally)"
+              value={deliveryFee || ""}
+              onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
+              className="h-12 text-base bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
+            />
+            {entries.length > 0 && deliveryFee > 0 && (
+              <div className="mt-4 p-4 bg-[#F8F9FA] rounded-lg flex items-center justify-between">
+                <span className="text-sm text-[#6C757D]">
+                  Fee per person ({entries.length} participant{entries.length !== 1 ? "s" : ""})
+                </span>
+                <span className="font-semibold text-[#DE1B54]">{formatEGP(feeShare)}</span>
+              </div>
+            )}
+          </section>
+
+          {/* Members Table Section */}
+          <section className="bg-white rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#27235C] flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-[#212529]">
+                Members
+                {entries.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-[#6C757D]">
+                    ({entries.length})
+                  </span>
+                )}
+              </h2>
+            </div>
+
+            {entries.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-[#E9ECEF] flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-8 w-8 text-[#6C757D]" />
+                </div>
+                <p className="text-[#6C757D]">No orders yet. Add your first order above.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-6 px-6">
+                <table className="w-full min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-[#E9ECEF]">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#27235C]">Name</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#27235C]">Item</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-[#27235C]">Price</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-[#27235C]">Fee</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-[#27235C]">Total</th>
+                      <th className="text-center py-3 px-4 text-sm font-semibold text-[#27235C]">Paid</th>
+                      <th className="py-3 px-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entries.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className={`border-b border-[#E9ECEF] last:border-0 transition-colors ${
+                          entry.paid ? "bg-emerald-50" : ""
+                        }`}
                       >
-                        <span className="bg-[#27235C] text-white text-xs px-2 py-1 rounded-full font-bold">
-                          {groupedItem.count}x
-                        </span>
-                        <span className="font-medium">{groupedItem.name}</span>
-                      </li>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            {entry.paid && (
+                              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            )}
+                            <span className="font-medium text-[#212529]">{entry.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-[#6C757D]">{entry.item}</td>
+                        <td className="py-4 px-4 text-right text-[#212529]">{formatEGP(entry.price)}</td>
+                        <td className="py-4 px-4 text-right text-[#DE1B54] font-medium">{formatEGP(feeShare)}</td>
+                        <td className="py-4 px-4 text-right font-semibold text-[#27235C]">
+                          {formatEGP(entry.price + feeShare)}
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <Switch
+                            checked={entry.paid}
+                            onCheckedChange={() => togglePaid(entry.id)}
+                            className="data-[state=checked]:bg-emerald-500"
+                          />
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeEntry(entry.id)}
+                            className="h-8 w-8 p-0 text-[#6C757D] hover:text-[#DE1B54] hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
                     ))}
-                  </ul>
-                </div>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-                <div className="mt-6 pt-4 border-t border-[#E5E7EB]">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-[#27235C]">Subtotal:</div>
-                    <div className="text-right font-medium">{formatEGP(subtotal)}</div>
-                    <div className="text-[#27235C]">Delivery Fee:</div>
-                    <div className="text-right font-medium text-[#DE1B54]">
-                      {formatEGP(deliveryFee)}
-                    </div>
-                    <div className="text-[#27235C] font-bold text-lg">Grand Total:</div>
-                    <div className="text-right font-bold text-lg text-[#27235C]">
-                      {formatEGP(grandTotal)}
-                    </div>
-                  </div>
+          {/* Order Summary Section */}
+          {entries.length > 0 && (
+            <section className="bg-white rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#DE1B54] flex items-center justify-center">
+                  <ClipboardList className="h-5 w-5 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+                <h2 className="text-lg font-semibold text-[#212529]">Order Summary</h2>
+              </div>
+
+              <div className="bg-[#F8F9FA] rounded-lg p-4 mb-6">
+                <h3 className="text-sm font-semibold text-[#27235C] mb-3">Items to Order:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {Object.values(groupedItems).map((groupedItem, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-lg text-sm"
+                    >
+                      <span className="w-6 h-6 rounded-full bg-[#27235C] text-white text-xs font-semibold flex items-center justify-center">
+                        {groupedItem.count}
+                      </span>
+                      <span className="text-[#212529]">{groupedItem.name}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4 border-t border-[#E9ECEF]">
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#6C757D]">Subtotal</span>
+                  <span className="text-[#212529]">{formatEGP(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#6C757D]">Delivery Fee</span>
+                  <span className="text-[#DE1B54]">{formatEGP(deliveryFee)}</span>
+                </div>
+                <div className="flex justify-between pt-3 border-t border-[#E9ECEF]">
+                  <span className="font-semibold text-[#212529]">Grand Total</span>
+                  <span className="font-bold text-xl text-[#27235C]">{formatEGP(grandTotal)}</span>
+                </div>
+              </div>
+            </section>
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pb-6">
             <Button
               onClick={handlePrint}
               disabled={entries.length === 0}
-              className="bg-[#DE1B54] hover:bg-[#b81747] text-white"
+              className="h-12 px-6 bg-[#27235C] hover:bg-[#1e1b47] text-white font-medium rounded-lg transition-colors"
             >
               <Printer className="h-4 w-4 mr-2" />
               Print Receipt
@@ -440,26 +410,24 @@ export default function OrderTracker() {
                 <Button
                   variant="outline"
                   disabled={entries.length === 0}
-                  className="border-destructive text-destructive hover:bg-destructive hover:text-white"
+                  className="h-12 px-6 border-[#E9ECEF] text-[#6C757D] hover:border-[#DE1B54] hover:text-[#DE1B54] hover:bg-red-50 font-medium rounded-lg transition-colors"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Clear All
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="rounded-lg">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Clear All Orders?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove all orders and reset the delivery fee. This
-                    action cannot be undone. Are you sure you want to start fresh
-                    for a new day?
+                  <AlertDialogTitle className="text-[#212529]">Clear All Orders?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-[#6C757D]">
+                    This will remove all orders and reset the delivery fee. This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={clearAll}
-                    className="bg-destructive text-white hover:bg-destructive/90"
+                    className="bg-[#DE1B54] hover:bg-[#c01848] text-white rounded-lg"
                   >
                     Yes, Clear All
                   </AlertDialogAction>
@@ -470,14 +438,12 @@ export default function OrderTracker() {
         </main>
 
         {/* Footer */}
-        <footer className="bg-[#1a1740] text-white py-4 mt-8">
-          <div className="max-w-6xl mx-auto px-4 text-center text-sm text-[#E5E7EB]">
-            <p>Sutherland Egypt Office - Order Tracker</p>
-          </div>
+        <footer className="py-4 text-center text-sm text-[#6C757D]">
+          Sutherland Egypt Office
         </footer>
       </div>
 
-      {/* Print Receipt - Only visible when printing */}
+      {/* Print Receipt */}
       <div className="print-receipt hidden print:block">
         <div className="text-center mb-4">
           <div className="text-lg font-bold tracking-wider">
