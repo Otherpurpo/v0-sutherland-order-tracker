@@ -154,7 +154,7 @@ export function OrderTracker() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#00447C]">
+      <div className="min-h-screen flex items-center justify-center bg-[#27235C]">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
@@ -163,12 +163,12 @@ export function OrderTracker() {
   return (
     <>
       {/* Main App - Hidden when printing */}
-      <div className="no-print min-h-screen bg-gradient-to-b from-[#00447C] to-[#003366]">
+      <div className="no-print min-h-screen bg-gradient-to-b from-[#27235C] to-[#1a1740]">
         {/* Header */}
-        <header className="bg-[#00447C] border-b border-[#003366] shadow-lg">
+        <header className="bg-[#27235C] border-b border-[#1a1740] shadow-lg">
           <div className="max-w-6xl mx-auto px-4 py-6">
             <div className="flex items-center justify-center gap-3">
-              <Package className="h-8 w-8 text-[#C9A227]" />
+              <Package className="h-8 w-8 text-[#DE1B54]" />
               <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight text-balance">
                 Sutherland Order Tracker
               </h1>
@@ -181,16 +181,16 @@ export function OrderTracker() {
 
         <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
           {/* Restaurant Name Card */}
-          <Card className="border-[#C9A227] border-2 bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#00447C] to-[#003366] text-white rounded-t-lg">
+          <Card className="border-[#DE1B54] border-2 bg-white shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="h-5 w-5 text-[#C9A227]" />
+                <Package className="h-5 w-5 text-[#DE1B54]" />
                 Restaurant
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <Field>
-                <FieldLabel className="text-[#00447C] font-semibold">
+                <FieldLabel className="text-[#27235C] font-semibold">
                   Restaurant Name
                 </FieldLabel>
                 <Input
@@ -198,7 +198,7 @@ export function OrderTracker() {
                   placeholder="Enter restaurant name"
                   value={restaurantName}
                   onChange={(e) => setRestaurantName(e.target.value)}
-                  className="text-lg font-medium border-[#00447C] focus:ring-[#C9A227]"
+                  className="text-lg font-medium border-[#27235C] focus:ring-[#DE1B54]"
                 />
               </Field>
             </CardContent>
@@ -206,9 +206,9 @@ export function OrderTracker() {
 
           {/* Add Order Form */}
           <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#00447C] to-[#003366] text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Plus className="h-5 w-5 text-[#C9A227]" />
+                <Plus className="h-5 w-5 text-[#DE1B54]" />
                 Add New Order
               </CardTitle>
             </CardHeader>
@@ -216,31 +216,31 @@ export function OrderTracker() {
               <FieldGroup>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Field>
-                    <FieldLabel className="text-[#00447C] font-semibold">
+                    <FieldLabel className="text-[#27235C] font-semibold">
                       Name
                     </FieldLabel>
                     <Input
                       placeholder="Enter name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="border-[#00447C] focus:ring-[#C9A227]"
+                      className="border-[#27235C] focus:ring-[#DE1B54]"
                       onKeyDown={(e) => e.key === "Enter" && addEntry()}
                     />
                   </Field>
                   <Field>
-                    <FieldLabel className="text-[#00447C] font-semibold">
+                    <FieldLabel className="text-[#27235C] font-semibold">
                       Item Description
                     </FieldLabel>
                     <Input
                       placeholder="e.g., Rob3 far5a"
                       value={item}
                       onChange={(e) => setItem(e.target.value)}
-                      className="border-[#00447C] focus:ring-[#C9A227]"
+                      className="border-[#27235C] focus:ring-[#DE1B54]"
                       onKeyDown={(e) => e.key === "Enter" && addEntry()}
                     />
                   </Field>
                   <Field>
-                    <FieldLabel className="text-[#00447C] font-semibold">
+                    <FieldLabel className="text-[#27235C] font-semibold">
                       Price (EGP)
                     </FieldLabel>
                     <Input
@@ -248,7 +248,7 @@ export function OrderTracker() {
                       placeholder="0.00"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="border-[#00447C] focus:ring-[#C9A227]"
+                      className="border-[#27235C] focus:ring-[#DE1B54]"
                       onKeyDown={(e) => e.key === "Enter" && addEntry()}
                     />
                   </Field>
@@ -256,7 +256,7 @@ export function OrderTracker() {
                 <Button
                   onClick={addEntry}
                   disabled={!name.trim() || !item.trim() || !price.trim()}
-                  className="w-full md:w-auto bg-[#00447C] hover:bg-[#003366] text-white"
+                  className="w-full md:w-auto bg-[#27235C] hover:bg-[#1a1740] text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Order
@@ -267,15 +267,15 @@ export function OrderTracker() {
 
           {/* Delivery Fee Card */}
           <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#00447C] to-[#003366] text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Truck className="h-5 w-5 text-[#C9A227]" />
+                <Truck className="h-5 w-5 text-[#DE1B54]" />
                 Total Delivery Fee
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <Field>
-                <FieldLabel className="text-[#00447C] font-semibold">
+                <FieldLabel className="text-[#27235C] font-semibold">
                   Enter total delivery fee (will be split equally)
                 </FieldLabel>
                 <Input
@@ -285,13 +285,13 @@ export function OrderTracker() {
                   onChange={(e) =>
                     setDeliveryFee(parseFloat(e.target.value) || 0)
                   }
-                  className="text-lg font-medium border-[#00447C] focus:ring-[#C9A227]"
+                  className="text-lg font-medium border-[#27235C] focus:ring-[#DE1B54]"
                 />
               </Field>
               {entries.length > 0 && deliveryFee > 0 && (
-                <p className="mt-3 text-sm text-[#00447C] bg-[#E5E7EB] p-3 rounded-md">
+                <p className="mt-3 text-sm text-[#27235C] bg-[#E5E7EB] p-3 rounded-md">
                   Fee per person:{" "}
-                  <span className="font-bold text-[#C9A227]">
+                  <span className="font-bold text-[#DE1B54]">
                     {formatEGP(feeShare)}
                   </span>{" "}
                   ({entries.length} participant{entries.length !== 1 ? "s" : ""})
@@ -302,9 +302,9 @@ export function OrderTracker() {
 
           {/* Members Table */}
           <Card className="bg-white shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-[#00447C] to-[#003366] text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-[#27235C] to-[#1a1740] text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5 text-[#C9A227]" />
+                <Users className="h-5 w-5 text-[#DE1B54]" />
                 Members ({entries.length})
               </CardTitle>
             </CardHeader>
@@ -318,13 +318,13 @@ export function OrderTracker() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-[#E5E7EB]">
-                      <TableHead className="text-[#00447C] font-bold">Name</TableHead>
-                      <TableHead className="text-[#00447C] font-bold">Item</TableHead>
-                      <TableHead className="text-[#00447C] font-bold text-right">Price</TableHead>
-                      <TableHead className="text-[#00447C] font-bold text-right">Fee Share</TableHead>
-                      <TableHead className="text-[#00447C] font-bold text-right">Total</TableHead>
-                      <TableHead className="text-[#00447C] font-bold text-center">Paid</TableHead>
-                      <TableHead className="text-[#00447C] font-bold text-center">Action</TableHead>
+                      <TableHead className="text-[#27235C] font-bold">Name</TableHead>
+                      <TableHead className="text-[#27235C] font-bold">Item</TableHead>
+                      <TableHead className="text-[#27235C] font-bold text-right">Price</TableHead>
+                      <TableHead className="text-[#27235C] font-bold text-right">Fee Share</TableHead>
+                      <TableHead className="text-[#27235C] font-bold text-right">Total</TableHead>
+                      <TableHead className="text-[#27235C] font-bold text-center">Paid</TableHead>
+                      <TableHead className="text-[#27235C] font-bold text-center">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -333,17 +333,17 @@ export function OrderTracker() {
                         key={entry.id}
                         className={entry.paid ? "bg-green-50" : ""}
                       >
-                        <TableCell className="font-medium text-[#00447C]">
+                        <TableCell className="font-medium text-[#27235C]">
                           {entry.name}
                         </TableCell>
                         <TableCell>{entry.item}</TableCell>
                         <TableCell className="text-right">
                           {formatEGP(entry.price)}
                         </TableCell>
-                        <TableCell className="text-right text-[#C9A227] font-medium">
+                        <TableCell className="text-right text-[#DE1B54] font-medium">
                           {formatEGP(feeShare)}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-[#00447C]">
+                        <TableCell className="text-right font-bold text-[#27235C]">
                           {formatEGP(entry.price + feeShare)}
                         </TableCell>
                         <TableCell className="text-center">
@@ -383,7 +383,7 @@ export function OrderTracker() {
           {/* Order Summary */}
           {entries.length > 0 && (
             <Card className="bg-white shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-[#C9A227] to-[#B8911F] text-white rounded-t-lg">
+              <CardHeader className="bg-gradient-to-r from-[#DE1B54] to-[#b81747] text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Receipt className="h-5 w-5" />
                   Order Summary (for Restaurant)
@@ -391,14 +391,14 @@ export function OrderTracker() {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="bg-[#E5E7EB] rounded-lg p-4">
-                  <h3 className="font-bold text-[#00447C] mb-3">Items to Order:</h3>
+                  <h3 className="font-bold text-[#27235C] mb-3">Items to Order:</h3>
                   <ul className="space-y-2">
                     {Object.values(groupedItems).map((item, index) => (
                       <li
                         key={index}
-                        className="flex items-center gap-2 text-[#00447C]"
+                        className="flex items-center gap-2 text-[#27235C]"
                       >
-                        <span className="bg-[#00447C] text-white text-xs px-2 py-1 rounded-full font-bold">
+                        <span className="bg-[#27235C] text-white text-xs px-2 py-1 rounded-full font-bold">
                           {item.count}x
                         </span>
                         <span className="font-medium">{item.name}</span>
@@ -409,14 +409,14 @@ export function OrderTracker() {
 
                 <div className="mt-6 pt-4 border-t border-[#E5E7EB]">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="text-[#00447C]">Subtotal:</div>
+                    <div className="text-[#27235C]">Subtotal:</div>
                     <div className="text-right font-medium">{formatEGP(subtotal)}</div>
-                    <div className="text-[#00447C]">Delivery Fee:</div>
-                    <div className="text-right font-medium text-[#C9A227]">
+                    <div className="text-[#27235C]">Delivery Fee:</div>
+                    <div className="text-right font-medium text-[#DE1B54]">
                       {formatEGP(deliveryFee)}
                     </div>
-                    <div className="text-[#00447C] font-bold text-lg">Grand Total:</div>
-                    <div className="text-right font-bold text-lg text-[#00447C]">
+                    <div className="text-[#27235C] font-bold text-lg">Grand Total:</div>
+                    <div className="text-right font-bold text-lg text-[#27235C]">
                       {formatEGP(grandTotal)}
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export function OrderTracker() {
             <Button
               onClick={handlePrint}
               disabled={entries.length === 0}
-              className="bg-[#C9A227] hover:bg-[#B8911F] text-white"
+              className="bg-[#DE1B54] hover:bg-[#b81747] text-white"
             >
               <Printer className="h-4 w-4 mr-2" />
               Print Receipt
@@ -471,7 +471,7 @@ export function OrderTracker() {
         </main>
 
         {/* Footer */}
-        <footer className="bg-[#003366] text-white py-4 mt-8">
+        <footer className="bg-[#1a1740] text-white py-4 mt-8">
           <div className="max-w-6xl mx-auto px-4 text-center text-sm text-[#E5E7EB]">
             <p>Sutherland Egypt Office - Order Tracker</p>
           </div>
