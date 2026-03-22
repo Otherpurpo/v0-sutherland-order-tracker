@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Store,
   Plus,
@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Trash2,
   Check,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ interface OrderEntry {
   item: string;
   price: number;
   paid: boolean;
+  customFee?: number;
+  amountPaid?: number;
 }
 
 interface OrderData {
@@ -81,8 +84,11 @@ export default function OrderTracker() {
   }, [entries, deliveryFee, restaurantName, isLoaded]);
 
   const feeShare = useMemo(() => {
-    return entries.length > 0 ? deliveryFee / entries.length : 0;
-  }, [entries.length, deliveryFee]);
+    const entriesWithoutCustomFee = entries.filter((e) => e.customFee === undefined);
+    const totalCustomFee = entries.reduce((sum, e) => sum + (e.customFee || 0), 0);
+    const remainingFee = Math.max(0, deliveryFee - totalCustomFee);
+    return entriesWithoutCustomFee.length > 0 ? remainingFee / entriesWithoutCustomFee.length : 0;
+  }, [entries, deliveryFee]);
 
   const subtotal = useMemo(() => {
     return entries.reduce((sum, entry) => sum + entry.price, 0);
@@ -126,10 +132,10 @@ export default function OrderTracker() {
     setEntries((prev) => prev.filter((entry) => entry.id !== id));
   }, []);
 
-  const togglePaid = useCallback((id: string) => {
+  const updateEntry = useCallback((id: string, updates: Partial<OrderEntry>) => {
     setEntries((prev) =>
       prev.map((entry) =>
-        entry.id === id ? { ...entry, paid: !entry.paid } : entry
+        entry.id === id ? { ...entry, ...updates } : entry
       )
     );
   }, []);
@@ -143,6 +149,48 @@ export default function OrderTracker() {
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
+
+  const generateReceiptText = useCallback(() => {
+    let text = "SUTHERBITES ORDER SUMMARY\n";
+    text += `Date: ${new Date().toLocaleDateString("en-GB")}\n\n`;
+    text += "ORDERS:\n";
+    entries.forEach((entry, index) => {
+      text += `${index + 1}. ${entry.name}\n`;
+      text += `   ${entry.item} - ${formatEGP(entry.price)}\n`;
+      const fee = entry.customFee !== undefined ? entry.customFee : feeShare;
+      text += `   + Fee: ${formatEGP(fee)}\n`;
+      const total = entry.price + fee;
+      let paidStr = entry.paid ? ` [PAID: ${formatEGP(entry.amountPaid || 0)}]` : "";
+      text += `   = ${formatEGP(total)}${paidStr}\n`;
+      
+      const diff = (entry.amountPaid || 0) - total;
+      if (entry.paid && Math.abs(diff) >= 0.01) {
+        text += diff > 0 
+          ? `   (Change to return: ${formatEGP(diff)})\n`
+          : `   (Still owes: ${formatEGP(Math.abs(diff))})\n`;
+      }
+      text += "\n";
+    });
+
+    text += "FOR RESTAURANT:\n";
+    Object.values(groupedItems).forEach((groupedItem) => {
+      text += `${groupedItem.count}x ${groupedItem.name}\n`;
+    });
+
+    text += "\n";
+    text += `Subtotal: ${formatEGP(subtotal)}\n`;
+    text += `Delivery: ${formatEGP(deliveryFee)}\n`;
+    text += `GRAND TOTAL: ${formatEGP(grandTotal)}\n`;
+
+    return text;
+  }, [entries, feeShare, groupedItems, subtotal, deliveryFee, grandTotal]);
+
+  const handleCopyText = useCallback(() => {
+    const text = generateReceiptText();
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Receipt text copied to clipboard!");
+    });
+  }, [generateReceiptText]);
 
   if (!isLoaded) {
     return (
@@ -158,13 +206,11 @@ export default function OrderTracker() {
       <div className="no-print min-h-screen bg-[#F8F9FA]">
         {/* Header - Flat Design */}
         <header className="bg-[#27235C] py-6">
-          <div className="max-w-4xl mx-auto px-4">
+          <div className="max-w-4xl mx-auto px-4 flex items-center justify-center gap-3">
+            <img src="/logo.png" alt="SutherBites Logo" className="w-12 h-12 object-contain" />
             <h1 className="text-2xl font-semibold text-white text-center tracking-tight">
-              Sutherland Order Tracker
+              SutherBites
             </h1>
-            <p className="text-center text-white/70 mt-1 text-sm">
-              Egypt Office
-            </p>
           </div>
         </header>
 
@@ -320,17 +366,56 @@ export default function OrderTracker() {
                           </div>
                         </td>
                         <td className="py-4 px-4 text-[#6C757D]">{entry.item}</td>
-                        <td className="py-4 px-4 text-right text-[#212529]">{formatEGP(entry.price)}</td>
-                        <td className="py-4 px-4 text-right text-[#DE1B54] font-medium">{formatEGP(feeShare)}</td>
-                        <td className="py-4 px-4 text-right font-semibold text-[#27235C]">
-                          {formatEGP(entry.price + feeShare)}
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <Switch
-                            checked={entry.paid}
-                            onCheckedChange={() => togglePaid(entry.id)}
-                            className="data-[state=checked]:bg-emerald-500"
+                        <td className="py-4 px-4 text-right text-[#212529]">
+                          <Input
+                            type="number"
+                            value={entry.price || ""}
+                            onChange={(e) => updateEntry(entry.id, { price: parseFloat(e.target.value) || 0 })}
+                            className="w-24 ml-auto h-8 text-right bg-transparent border-0 hover:bg-white/50 focus:bg-white focus-visible:ring-1 focus-visible:ring-[#27235C]"
                           />
+                        </td>
+                        <td className="py-4 px-4 text-right text-[#DE1B54] font-medium">
+                          <Input
+                            type="number"
+                            placeholder={feeShare.toFixed(2)}
+                            value={entry.customFee !== undefined ? entry.customFee : ""}
+                            onChange={(e) => updateEntry(entry.id, { customFee: e.target.value ? parseFloat(e.target.value) : undefined })}
+                            className="w-24 ml-auto h-8 text-right text-[#DE1B54] font-medium bg-transparent border-0 hover:bg-white/50 focus:bg-white focus-visible:ring-1 focus-visible:ring-[#27235C]"
+                          />
+                        </td>
+                        <td className="py-4 px-4 text-right font-semibold text-[#27235C]">
+                          {formatEGP(entry.price + (entry.customFee !== undefined ? entry.customFee : feeShare))}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex flex-col items-center gap-2">
+                            <Switch
+                              checked={entry.paid}
+                              onCheckedChange={(checked) => {
+                                const totalOwed = entry.price + (entry.customFee !== undefined ? entry.customFee : feeShare);
+                                updateEntry(entry.id, { paid: checked, amountPaid: checked ? totalOwed : undefined });
+                              }}
+                              className="data-[state=checked]:bg-emerald-500"
+                            />
+                            {entry.paid && (
+                              <div className="flex flex-col items-center select-none">
+                                <Input
+                                  type="number"
+                                  value={entry.amountPaid || ""}
+                                  onChange={(e) => updateEntry(entry.id, { amountPaid: parseFloat(e.target.value) || 0 })}
+                                  className="w-20 h-7 px-1 text-xs text-center border-[#E9ECEF] focus-visible:ring-emerald-500"
+                                  placeholder="Paid"
+                                />
+                                {(() => {
+                                  const totalOwed = entry.price + (entry.customFee !== undefined ? entry.customFee : feeShare);
+                                  const paid = entry.amountPaid || 0;
+                                  const diff = paid - totalOwed;
+                                  if (Math.abs(diff) < 0.01) return null;
+                                  if (diff > 0) return <span className="text-[10px] text-emerald-600 mt-1 font-medium whitespace-nowrap">Change: {formatEGP(diff)}</span>;
+                                  return <span className="text-[10px] text-red-500 mt-1 font-medium whitespace-nowrap">Owes: {formatEGP(Math.abs(diff))}</span>;
+                                })()}
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="py-4 px-4 text-right">
                           <Button
@@ -395,7 +480,7 @@ export default function OrderTracker() {
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pb-6">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pb-6 flex-wrap">
             <Button
               onClick={handlePrint}
               disabled={entries.length === 0}
@@ -403,6 +488,15 @@ export default function OrderTracker() {
             >
               <Printer className="h-4 w-4 mr-2" />
               Print Receipt
+            </Button>
+
+            <Button
+              onClick={handleCopyText}
+              disabled={entries.length === 0}
+              className="h-12 px-6 bg-[#DE1B54] hover:bg-[#c01848] text-white font-medium rounded-lg transition-colors"
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Receipt
             </Button>
 
             <AlertDialog>
@@ -439,7 +533,7 @@ export default function OrderTracker() {
 
         {/* Footer */}
         <footer className="py-4 text-center text-sm text-[#6C757D]">
-          Sutherland Egypt Office
+          Made by Omar
         </footer>
       </div>
 
@@ -449,8 +543,7 @@ export default function OrderTracker() {
           <div className="text-lg font-bold tracking-wider">
             ================================
           </div>
-          <div className="text-xl font-bold my-2">SUTHERLAND ORDER TRACKER</div>
-          <div className="text-sm">Egypt Office</div>
+          <div className="text-xl font-bold my-2">SUTHERBITES</div>
           {restaurantName && (
             <div className="text-sm font-bold mt-1">{restaurantName}</div>
           )}
@@ -477,12 +570,22 @@ export default function OrderTracker() {
                 {entry.item} - {formatEGP(entry.price)}
               </div>
               <div className="pl-4">
-                + Fee: {formatEGP(feeShare)}
+                + Fee: {formatEGP(entry.customFee !== undefined ? entry.customFee : feeShare)}
               </div>
               <div className="pl-4 font-bold">
-                = {formatEGP(entry.price + feeShare)}
-                {entry.paid ? " [PAID]" : ""}
+                = {formatEGP(entry.price + (entry.customFee !== undefined ? entry.customFee : feeShare))}
+                {entry.paid ? ` [PAID: ${formatEGP(entry.amountPaid || 0)}]` : ""}
               </div>
+              {(() => {
+                const totalOwed = entry.price + (entry.customFee !== undefined ? entry.customFee : feeShare);
+                const diff = (entry.amountPaid || 0) - totalOwed;
+                if (!entry.paid || Math.abs(diff) < 0.01) return null;
+                return (
+                  <div className="pl-4 text-xs italic">
+                    {diff > 0 ? `Change to return: ${formatEGP(diff)}` : `Still owes: ${formatEGP(Math.abs(diff))}`}
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -519,7 +622,7 @@ export default function OrderTracker() {
         <div className="text-center mt-6 text-xs">
           <div>--------------------------------</div>
           <div>Thank you!</div>
-          <div>Sutherland Egypt</div>
+          <div>Made by Omar</div>
         </div>
       </div>
     </>
