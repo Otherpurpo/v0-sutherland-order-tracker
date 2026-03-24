@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Store,
@@ -311,10 +312,28 @@ export default function OrderTracker() {
     <>
       <div className="no-print min-h-screen bg-[#F8F9FA]" dir={lang === "ar" ? "rtl" : "ltr"}>
         {/* Header */}
-        <header className="bg-[#27235C] py-6 relative">
-          <div className="max-w-4xl mx-auto px-4 relative flex items-center justify-center min-h-[48px]">
-            {/* Language Toggles */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2" dir="ltr">
+        <header className="bg-[#27235C] py-4 relative print:hidden">
+          <div className="max-w-4xl mx-auto px-4 flex items-center justify-between min-h-[48px]">
+            {/* Logo on the Left */}
+            <div className="flex items-center gap-3" dir="ltr">
+              <img src="/logo.png" alt="SutherBites Logo" className="w-10 h-10 object-contain" />
+              <h1 className="text-xl font-semibold text-white tracking-tight hidden sm:block">
+                SutherBites
+              </h1>
+            </div>
+
+            {/* Navigation in the Middle */}
+            <div className="flex items-center gap-2 bg-[#1e1b47] p-1 rounded-lg" dir={lang === "ar" ? "rtl" : "ltr"}>
+              <Link href="/" className="px-4 py-2 bg-white text-[#27235C] rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+                {lang === 'ar' ? 'الطلب' : 'Order'}
+              </Link>
+              <Link href="/menus" className="px-4 py-2 text-white/70 hover:text-white rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+                {lang === 'ar' ? 'القوائم' : 'Menus'}
+              </Link>
+            </div>
+
+            {/* Language Toggles on the Right */}
+            <div className="flex gap-2" dir="ltr">
               <button 
                 onClick={() => setLang('en')} 
                 className={`text-xs px-2 py-1 rounded border font-medium transition-colors ${lang === 'en' ? 'bg-white text-[#27235C] border-white' : 'text-white/70 border-white/20 hover:text-white'}`}
@@ -327,13 +346,6 @@ export default function OrderTracker() {
               >
                 AR
               </button>
-            </div>
-
-            <div className="flex items-center justify-center gap-3" dir="ltr">
-              <img src="/logo.png" alt="SutherBites Logo" className="w-12 h-12 object-contain" />
-              <h1 className="text-2xl font-semibold text-white text-center tracking-tight">
-                SutherBites
-              </h1>
             </div>
           </div>
         </header>
