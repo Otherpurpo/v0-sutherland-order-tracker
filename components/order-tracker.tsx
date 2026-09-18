@@ -213,9 +213,8 @@ export default function OrderTracker() {
       <div className="no-print min-h-screen bg-[#F8F9FA]">
         {/* Header - Flat Design */}
   <header className="bg-[#27235C] py-4">
-  <div className="max-w-4xl mx-auto px-4 relative">
-  <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/c6c2ffea-3a2c-4ce2-9673-30a737626319-removebg-preview-xePx7kcN5r1aYUOCwgaGiIb7SztaCw.png" alt="Suther Bites logo" className="absolute left-4 top-1 h-16 w-16 object-contain" />
-  <h1 className="text-2xl font-semibold text-white text-center tracking-tight pl-16">
+  <div className="max-w-4xl mx-auto px-4">
+  <h1 className="text-2xl font-semibold text-white text-center tracking-tight">
   Sutherland Order Tracker
   </h1>
             <p className="text-center text-white/70 mt-1 text-sm">
