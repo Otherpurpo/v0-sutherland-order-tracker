@@ -37,6 +37,7 @@ interface OrderEntry {
   item: string;
   price: number;
   paid: boolean;
+  paidAmount: number;
 }
 
 interface OrderData {
@@ -56,9 +57,12 @@ export default function OrderTracker() {
   const [name, setName] = useState("");
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
+  const [itemCount, setItemCount] = useState(1);
+  const [items, setItems] = useState([{ item: "", price: "" }]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingItem, setEditingItem] = useState("");
+  const [editingPrice, setEditingPrice] = useState("");
   const [showCollection, setShowCollection] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -67,7 +71,10 @@ export default function OrderTracker() {
     if (saved) {
       try {
         const data: OrderData = JSON.parse(saved);
-        setEntries(data.entries || []);
+        setEntries((data.entries || []).map((entry) => ({
+          ...entry,
+          paidAmount: typeof entry.paidAmount === "number" ? entry.paidAmount : entry.paid ? entry.price : 0,
+        })));
         setDeliveryFee(data.deliveryFee || 0);
         setRestaurantName(data.restaurantName || "");
       } catch {
@@ -111,56 +118,78 @@ export default function OrderTracker() {
     return groups;
   }, [entries]);
 
-  const addEntry = useCallback(() => {
-    if (!name.trim() || !item.trim() || !price.trim()) return;
+  const updateItemDraft = useCallback((index: number, field: "item" | "price", value: string) => {
+    setItems((current) => current.map((draft, draftIndex) => draftIndex === index ? { ...draft, [field]: value } : draft));
+  }, []);
 
-    const newEntry: OrderEntry = {
+  const changeItemCount = useCallback((count: number) => {
+    const nextCount = Math.max(1, Math.min(20, count || 1));
+    setItemCount(nextCount);
+    setItems((current) => Array.from({ length: nextCount }, (_, index) => current[index] || { item: "", price: "" }));
+  }, []);
+
+  const addEntry = useCallback(() => {
+    const drafts = items.length ? items : [{ item, price }];
+    if (!name.trim() || drafts.some((draft) => !draft.item.trim() || !draft.price.trim())) return;
+    const newEntries: OrderEntry[] = drafts.map((draft) => ({
       id: crypto.randomUUID(),
       name: name.trim(),
-      item: item.trim(),
-      price: parseFloat(price) || 0,
+      item: draft.item.trim(),
+      price: parseFloat(draft.price) || 0,
       paid: false,
-    };
-
-    setEntries((prev) => [...prev, newEntry]);
+      paidAmount: 0,
+    }));
+    setEntries((prev) => [...prev, ...newEntries]);
     setName("");
     setItem("");
     setPrice("");
-  }, [name, item, price]);
+    setItemCount(1);
+    setItems([{ item: "", price: "" }]);
+  }, [name, item, price, items]);
 
   const removeEntry = useCallback((id: string) => {
     setEntries((prev) => prev.filter((entry) => entry.id !== id));
   }, []);
 
+  const updatePaidAmount = useCallback((id: string, value: string) => {
+    const paidAmount = Math.max(0, parseFloat(value) || 0);
+    setEntries((current) => current.map((entry) => entry.id === id ? { ...entry, paidAmount, paid: paidAmount >= entry.price + feeShare } : entry));
+  }, [feeShare]);
+
   const togglePaid = useCallback((id: string) => {
-    setEntries((current) =>
-      current.map((entry) =>
-        entry.id === id ? { ...entry, paid: !entry.paid } : entry
-      )
-    );
-  }, []);
+    setEntries((current) => current.map((entry) => {
+      if (entry.id !== id) return entry;
+      const paidAmount = entry.paid ? 0 : entry.price + feeShare;
+      return { ...entry, paid: !entry.paid, paidAmount };
+    }));
+  }, [feeShare]);
 
   const startEditing = useCallback((entry: OrderEntry) => {
     setEditingId(entry.id);
     setEditingName(entry.name);
     setEditingItem(entry.item);
+    setEditingPrice(String(entry.price));
   }, []);
 
   const saveEdit = useCallback(() => {
-    if (!editingId || !editingName.trim() || !editingItem.trim()) return;
+    if (!editingId || !editingName.trim() || !editingItem.trim() || !editingPrice.trim()) return;
     setEntries((current) =>
       current.map((entry) =>
         entry.id === editingId
-          ? { ...entry, name: editingName.trim(), item: editingItem.trim() }
+          ? { ...entry, name: editingName.trim(), item: editingItem.trim(), price: parseFloat(editingPrice) || 0 }
           : entry
       )
     );
     setEditingId(null);
-  }, [editingId, editingName, editingItem]);
+  }, [editingId, editingName, editingItem, editingPrice]);
 
   const collectMoney = useMemo(() => {
-    return entries.reduce<Record<string, number>>((totals, entry) => {
-      totals[entry.name] = (totals[entry.name] || 0) + entry.price + feeShare;
+    return entries.reduce<Record<string, { total: number; paid: number }>>((totals, entry) => {
+      const person = totals[entry.name] || { total: 0, paid: 0 };
+      totals[entry.name] = {
+        total: person.total + entry.price + feeShare,
+        paid: person.paid + entry.paidAmount,
+      };
       return totals;
     }, {});
   }, [entries, feeShare]);
@@ -226,42 +255,27 @@ export default function OrderTracker() {
               <h2 className="text-lg font-semibold text-[#212529]">Add New Order</h2>
             </div>
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-[#6C757D]">Name</label>
-                  <Input
-                    placeholder="Enter name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
-                  />
+                  <Input placeholder="Enter name" value={name} onChange={(e) => setName(e.target.value)} className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-[#6C757D]">Item</label>
-                  <Input
-                    placeholder="e.g., Rob3 far5a"
-                    value={item}
-                    onChange={(e) => setItem(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
-                  />
+                  <label htmlFor="item-count" className="text-sm font-medium text-[#6C757D]">Number of items</label>
+                  <Input id="item-count" type="number" min={1} max={20} value={itemCount} onChange={(e) => changeItemCount(parseInt(e.target.value, 10))} className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]" />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-[#6C757D]">Price (EGP)</label>
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addEntry()}
-                    className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]"
-                  />
-                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {items.map((draft, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-3">
+                    <Input placeholder={`Item ${index + 1} description`} value={draft.item} onChange={(e) => updateItemDraft(index, "item", e.target.value)} className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]" />
+                    <Input type="number" min={0} step="0.01" placeholder="Price (EGP)" value={draft.price} onChange={(e) => updateItemDraft(index, "price", e.target.value)} className="h-12 bg-[#F8F9FA] border-0 focus-visible:ring-2 focus-visible:ring-[#27235C]" />
+                  </div>
+                ))}
               </div>
               <Button
                 onClick={addEntry}
-                disabled={!name.trim() || !item.trim() || !price.trim()}
+                disabled={!name.trim() || items.some((draft) => !draft.item.trim() || !draft.price.trim())}
                 className="h-12 bg-[#DE1B54] hover:bg-[#c01848] text-white font-medium rounded-lg transition-colors"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -359,17 +373,18 @@ export default function OrderTracker() {
                             <Input value={editingItem} onChange={(event) => setEditingItem(event.target.value)} className="h-9 min-w-40" aria-label="Edit item description" />
                           ) : entry.item}
                         </td>
-                        <td className="py-4 px-4 text-right text-[#212529]">{formatEGP(entry.price)}</td>
+                        <td className="py-4 px-4 text-right text-[#212529]">
+                          {editingId === entry.id ? <Input type="number" min={0} step="0.01" value={editingPrice} onChange={(event) => setEditingPrice(event.target.value)} className="h-9 w-28 ml-auto" aria-label="Edit item price" /> : formatEGP(entry.price)}
+                        </td>
                         <td className="py-4 px-4 text-right text-[#DE1B54] font-medium">{formatEGP(feeShare)}</td>
                         <td className="py-4 px-4 text-right font-semibold text-[#27235C]">
                           {formatEGP(entry.price + feeShare)}
                         </td>
                         <td className="py-4 px-4 text-center">
-                          <Switch
-                            checked={entry.paid}
-                            onCheckedChange={() => togglePaid(entry.id)}
-                            className="data-[state=checked]:bg-emerald-500"
-                          />
+                          <div className="flex flex-col items-center gap-2">
+                            <Input type="number" min={0} step="0.01" value={entry.paidAmount || ""} onChange={(event) => updatePaidAmount(entry.id, event.target.value)} placeholder="Paid" className="h-9 w-24 text-right" aria-label={`Amount paid by ${entry.name}`} />
+                            <Switch checked={entry.paid} onCheckedChange={() => togglePaid(entry.id)} className="data-[state=checked]:bg-emerald-500" aria-label={`Mark ${entry.name} paid`} />
+                          </div>
                         </td>
                         <td className="py-4 px-4 text-right">
                           <div className="flex justify-end gap-1">
@@ -501,12 +516,19 @@ export default function OrderTracker() {
                 </div>
               </div>
               <div className="divide-y divide-[#E9ECEF]">
-                {Object.entries(collectMoney).map(([person, total]) => (
-                  <div key={person} className="flex items-center justify-between py-3">
-                    <span className="font-medium text-[#212529]">{person}</span>
-                    <span className="font-semibold text-[#27235C]">{formatEGP(total)}</span>
-                  </div>
-                ))}
+                {Object.entries(collectMoney).map(([person, balance]) => {
+                  const remaining = balance.total - balance.paid;
+                  const status = remaining > 0.005 ? `Remaining ${formatEGP(remaining)}` : remaining < -0.005 ? `Change ${formatEGP(Math.abs(remaining))}` : "Paid in full";
+                  return (
+                    <div key={person} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3">
+                      <span className="font-medium text-[#212529]">{person}</span>
+                      <div className="text-left sm:text-right">
+                        <div className="font-semibold text-[#27235C]">Total {formatEGP(balance.total)}</div>
+                        <div className={`text-sm ${remaining === 0 ? "text-emerald-600" : remaining < 0 ? "text-amber-600" : "text-[#DE1B54]"}`}>{status} · Paid {formatEGP(balance.paid)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
