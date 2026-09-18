@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +63,7 @@ export default function OrderTracker() {
   const [editingItem, setEditingItem] = useState("");
   const [editingPrice, setEditingPrice] = useState("");
   const [showCollection, setShowCollection] = useState(false);
+  const [paymentsByPerson, setPaymentsByPerson] = useState<Record<string, number>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -75,8 +75,9 @@ export default function OrderTracker() {
           ...entry,
           paidAmount: typeof entry.paidAmount === "number" ? entry.paidAmount : entry.paid ? entry.price : 0,
         })));
-        setDeliveryFee(data.deliveryFee || 0);
-        setRestaurantName(data.restaurantName || "");
+  setDeliveryFee(data.deliveryFee || 0);
+  setRestaurantName(data.restaurantName || "");
+  setPaymentsByPerson(data.paymentsByPerson || {});
       } catch {
         console.error("Failed to load saved data");
       }
@@ -88,10 +89,10 @@ export default function OrderTracker() {
     if (isLoaded) {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ entries, deliveryFee, restaurantName })
+        JSON.stringify({ entries, deliveryFee, restaurantName, paymentsByPerson })
       );
     }
-  }, [entries, deliveryFee, restaurantName, isLoaded]);
+  }, [entries, deliveryFee, restaurantName, paymentsByPerson, isLoaded]);
 
   const feeShare = useMemo(() => {
     return entries.length > 0 ? deliveryFee / entries.length : 0;
@@ -151,18 +152,6 @@ export default function OrderTracker() {
     setEntries((prev) => prev.filter((entry) => entry.id !== id));
   }, []);
 
-  const updatePaidAmount = useCallback((id: string, value: string) => {
-    const paidAmount = Math.max(0, parseFloat(value) || 0);
-    setEntries((current) => current.map((entry) => entry.id === id ? { ...entry, paidAmount, paid: paidAmount >= entry.price + feeShare } : entry));
-  }, [feeShare]);
-
-  const togglePaid = useCallback((id: string) => {
-    setEntries((current) => current.map((entry) => {
-      if (entry.id !== id) return entry;
-      const paidAmount = entry.paid ? 0 : entry.price + feeShare;
-      return { ...entry, paid: !entry.paid, paidAmount };
-    }));
-  }, [feeShare]);
 
   const startEditing = useCallback((entry: OrderEntry) => {
     setEditingId(entry.id);
@@ -188,16 +177,22 @@ export default function OrderTracker() {
       const person = totals[entry.name] || { total: 0, paid: 0 };
       totals[entry.name] = {
         total: person.total + entry.price + feeShare,
-        paid: person.paid + entry.paidAmount,
+        paid: paymentsByPerson[entry.name] || 0,
       };
       return totals;
     }, {});
-  }, [entries, feeShare]);
+  }, [entries, feeShare, paymentsByPerson]);
+
+  const updatePersonPayment = useCallback((person: string, value: string) => {
+    const paid = Math.max(0, parseFloat(value) || 0);
+    setPaymentsByPerson((current) => ({ ...current, [person]: paid }));
+  }, []);
 
   const clearAll = useCallback(() => {
     setEntries([]);
-    setDeliveryFee(0);
-    setRestaurantName("");
+  setDeliveryFee(0);
+  setRestaurantName("");
+  setPaymentsByPerson({});
   }, []);
 
   const handlePrint = useCallback(() => {
@@ -217,11 +212,12 @@ export default function OrderTracker() {
       {/* Main App */}
       <div className="no-print min-h-screen bg-[#F8F9FA]">
         {/* Header - Flat Design */}
-        <header className="bg-[#27235C] py-6">
-          <div className="max-w-4xl mx-auto px-4">
-            <h1 className="text-2xl font-semibold text-white text-center tracking-tight">
-              Sutherland Order Tracker
-            </h1>
+  <header className="bg-[#27235C] py-4">
+  <div className="max-w-4xl mx-auto px-4 relative">
+  <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/c6c2ffea-3a2c-4ce2-9673-30a737626319-removebg-preview-xePx7kcN5r1aYUOCwgaGiIb7SztaCw.png" alt="Suther Bites logo" className="absolute left-4 top-1 h-16 w-16 object-contain" />
+  <h1 className="text-2xl font-semibold text-white text-center tracking-tight pl-16">
+  Sutherland Order Tracker
+  </h1>
             <p className="text-center text-white/70 mt-1 text-sm">
               Egypt Office
             </p>
@@ -342,8 +338,7 @@ export default function OrderTracker() {
                       <th className="text-right py-3 px-4 text-sm font-semibold text-[#27235C]">Price</th>
                       <th className="text-right py-3 px-4 text-sm font-semibold text-[#27235C]">Fee</th>
                       <th className="text-right py-3 px-4 text-sm font-semibold text-[#27235C]">Total</th>
-                      <th className="text-center py-3 px-4 text-sm font-semibold text-[#27235C]">Paid</th>
-                      <th className="py-3 px-4"></th>
+  <th className="py-3 px-4"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -380,13 +375,7 @@ export default function OrderTracker() {
                         <td className="py-4 px-4 text-right font-semibold text-[#27235C]">
                           {formatEGP(entry.price + feeShare)}
                         </td>
-                        <td className="py-4 px-4 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <Input type="number" min={0} step="0.01" value={entry.paidAmount || ""} onChange={(event) => updatePaidAmount(entry.id, event.target.value)} placeholder="Paid" className="h-9 w-24 text-right" aria-label={`Amount paid by ${entry.name}`} />
-                            <Switch checked={entry.paid} onCheckedChange={() => togglePaid(entry.id)} className="data-[state=checked]:bg-emerald-500" aria-label={`Mark ${entry.name} paid`} />
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
+  <td className="py-4 px-4 text-right">
                           <div className="flex justify-end gap-1">
                             {editingId === entry.id ? (
                               <Button size="sm" onClick={saveEdit} className="h-8 bg-[#27235C] text-white">Save</Button>
@@ -520,13 +509,17 @@ export default function OrderTracker() {
                   const remaining = balance.total - balance.paid;
                   const status = remaining > 0.005 ? `Remaining ${formatEGP(remaining)}` : remaining < -0.005 ? `Change ${formatEGP(Math.abs(remaining))}` : "Paid in full";
                   return (
-                    <div key={person} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3">
-                      <span className="font-medium text-[#212529]">{person}</span>
-                      <div className="text-left sm:text-right">
-                        <div className="font-semibold text-[#27235C]">Total {formatEGP(balance.total)}</div>
-                        <div className={`text-sm ${remaining === 0 ? "text-emerald-600" : remaining < 0 ? "text-amber-600" : "text-[#DE1B54]"}`}>{status} · Paid {formatEGP(balance.paid)}</div>
-                      </div>
-                    </div>
+<div key={person} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-3">
+  <span className="font-medium text-[#212529]">{person}</span>
+  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+  <label className="sr-only" htmlFor={`payment-${person}`}>Amount paid by {person}</label>
+  <Input id={`payment-${person}`} type="number" min={0} step="0.01" value={balance.paid || ""} onChange={(event) => updatePersonPayment(person, event.target.value)} placeholder="Amount paid" className="h-9 w-32 text-right" />
+  <div className="text-left sm:text-right">
+  <div className="font-semibold text-[#27235C]">Total {formatEGP(balance.total)}</div>
+  <div className={`text-sm ${remaining === 0 ? "text-emerald-600" : remaining < 0 ? "text-amber-600" : "text-[#DE1B54]"}`}>{status} · Paid {formatEGP(balance.paid)}</div>
+  </div>
+  </div>
+  </div>
                   );
                 })}
               </div>
