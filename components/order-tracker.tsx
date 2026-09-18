@@ -11,6 +11,8 @@ import {
   RotateCcw,
   Trash2,
   Check,
+  Pencil,
+  WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +56,10 @@ export default function OrderTracker() {
   const [name, setName] = useState("");
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingItem, setEditingItem] = useState("");
+  const [showCollection, setShowCollection] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -127,12 +133,37 @@ export default function OrderTracker() {
   }, []);
 
   const togglePaid = useCallback((id: string) => {
-    setEntries((prev) =>
-      prev.map((entry) =>
+    setEntries((current) =>
+      current.map((entry) =>
         entry.id === id ? { ...entry, paid: !entry.paid } : entry
       )
     );
   }, []);
+
+  const startEditing = useCallback((entry: OrderEntry) => {
+    setEditingId(entry.id);
+    setEditingName(entry.name);
+    setEditingItem(entry.item);
+  }, []);
+
+  const saveEdit = useCallback(() => {
+    if (!editingId || !editingName.trim() || !editingItem.trim()) return;
+    setEntries((current) =>
+      current.map((entry) =>
+        entry.id === editingId
+          ? { ...entry, name: editingName.trim(), item: editingItem.trim() }
+          : entry
+      )
+    );
+    setEditingId(null);
+  }, [editingId, editingName, editingItem]);
+
+  const collectMoney = useMemo(() => {
+    return entries.reduce<Record<string, number>>((totals, entry) => {
+      totals[entry.name] = (totals[entry.name] || 0) + entry.price + feeShare;
+      return totals;
+    }, {});
+  }, [entries, feeShare]);
 
   const clearAll = useCallback(() => {
     setEntries([]);
@@ -310,16 +341,24 @@ export default function OrderTracker() {
                         }`}
                       >
                         <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            {entry.paid && (
-                              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                                <Check className="h-3 w-3 text-white" />
-                              </div>
-                            )}
-                            <span className="font-medium text-[#212529]">{entry.name}</span>
-                          </div>
+                          {editingId === entry.id ? (
+                            <Input value={editingName} onChange={(event) => setEditingName(event.target.value)} className="h-9 min-w-32" aria-label="Edit member name" />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              {entry.paid && (
+                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                  <Check className="h-3 w-3 text-white" />
+                                </div>
+                              )}
+                              <span className="font-medium text-[#212529]">{entry.name}</span>
+                            </div>
+                          )}
                         </td>
-                        <td className="py-4 px-4 text-[#6C757D]">{entry.item}</td>
+                        <td className="py-4 px-4 text-[#6C757D]">
+                          {editingId === entry.id ? (
+                            <Input value={editingItem} onChange={(event) => setEditingItem(event.target.value)} className="h-9 min-w-40" aria-label="Edit item description" />
+                          ) : entry.item}
+                        </td>
                         <td className="py-4 px-4 text-right text-[#212529]">{formatEGP(entry.price)}</td>
                         <td className="py-4 px-4 text-right text-[#DE1B54] font-medium">{formatEGP(feeShare)}</td>
                         <td className="py-4 px-4 text-right font-semibold text-[#27235C]">
@@ -333,14 +372,18 @@ export default function OrderTracker() {
                           />
                         </td>
                         <td className="py-4 px-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeEntry(entry.id)}
-                            className="h-8 w-8 p-0 text-[#6C757D] hover:text-[#DE1B54] hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            {editingId === entry.id ? (
+                              <Button size="sm" onClick={saveEdit} className="h-8 bg-[#27235C] text-white">Save</Button>
+                            ) : (
+                              <Button variant="ghost" size="sm" onClick={() => startEditing(entry)} className="h-8 w-8 p-0 text-[#6C757D] hover:text-[#27235C] hover:bg-slate-50" aria-label={`Edit ${entry.name}`}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => removeEntry(entry.id)} className="h-8 w-8 p-0 text-[#6C757D] hover:text-[#DE1B54] hover:bg-red-50" aria-label={`Remove ${entry.name}`}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -402,7 +445,17 @@ export default function OrderTracker() {
               className="h-12 px-6 bg-[#27235C] hover:bg-[#1e1b47] text-white font-medium rounded-lg transition-colors"
             >
               <Printer className="h-4 w-4 mr-2" />
-              Print Receipt
+              Copy Receipt
+            </Button>
+
+            <Button
+              onClick={() => setShowCollection((visible) => !visible)}
+              disabled={entries.length === 0}
+              variant="outline"
+              className="h-12 px-6 border-[#27235C] text-[#27235C] hover:bg-[#27235C] hover:text-white font-medium rounded-lg transition-colors"
+            >
+              <WalletCards className="h-4 w-4 mr-2" />
+              Collect Money
             </Button>
 
             <AlertDialog>
@@ -435,6 +488,28 @@ export default function OrderTracker() {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+
+          {showCollection && entries.length > 0 && (
+            <section className="bg-white rounded-lg p-6 mb-6" aria-live="polite">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#DE1B54] flex items-center justify-center">
+                  <WalletCards className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-[#212529]">Money to Collect</h2>
+                  <p className="text-sm text-[#6C757D]">Each person&apos;s total receipt</p>
+                </div>
+              </div>
+              <div className="divide-y divide-[#E9ECEF]">
+                {Object.entries(collectMoney).map(([person, total]) => (
+                  <div key={person} className="flex items-center justify-between py-3">
+                    <span className="font-medium text-[#212529]">{person}</span>
+                    <span className="font-semibold text-[#27235C]">{formatEGP(total)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </main>
 
         {/* Footer */}
